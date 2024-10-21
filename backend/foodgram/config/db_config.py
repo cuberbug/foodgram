@@ -79,11 +79,7 @@ INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
 
 
 def validate_data(model_name: str) -> bool:
-    """Валидирует принятое значение.
-
-    Проверяется тип принятых данных и вхождение в список
-    с поддерживаемыми именами моделей.
-    """
+    """Валидирует принятое значение модели."""
     if not isinstance(model_name, str):
         logger.error(f'Принятый объект {model_name=} не является строкой.')
         return False
@@ -100,19 +96,7 @@ def validate_data(model_name: str) -> bool:
 
 
 def get_indexes_for_model(model_name: str) -> Indexes:
-    """
-    Возвращает подходящий вариант индексации для принятой модели.
-
-    Валидирует принятые данные, после чего выбирает из словаря
-    `INDEXES_FOR_MODELS` соответствующий принятому имени модели
-    кортеж с индексацией.
-
-    Args:
-        model_name: Название модели в любом регистре.
-
-    Returns:
-        Indexes: Кортеж с индексацией.
-    """
+    """Возвращает индексы для принятой модели."""
     if not validate_data(model_name):
         raise ValueError('Принятое имя модели не поддерживается.')
 

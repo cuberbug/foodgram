@@ -26,29 +26,20 @@ User = get_user_model()
 
 
 class NamedModel(models.Model):
-    """Абстрактная модель.
-
-    Добавляет поля:
-    - `name`: Для хранения названия.
-    """
-    name = models.CharField(
-        'название', max_length=LONG_LENGTH,
-    )
+    """Абстрактная модель с полем для хранения названия."""
+    name = models.CharField('название', max_length=LONG_LENGTH)
 
     class Meta:
         abstract = True
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class Tag(NamedModel):
     """Модель тегов."""
-    color = models.CharField(
-        'цвет', max_length=HEX_LENGTH,
-    )
-    slug = models.SlugField(
-        'слаг',
-        max_length=LONG_LENGTH,
-        unique=True,
-    )
+    color = models.CharField('цвет', max_length=HEX_LENGTH)
+    slug = models.SlugField('слаг', max_length=LONG_LENGTH, unique=True)
 
     class Meta:
         indexes = get_indexes_for_model('Tag')
@@ -56,12 +47,9 @@ class Tag(NamedModel):
         verbose_name = 'тег'
         verbose_name_plural = 'теги'
 
-    def __str__(self) -> str:
-        return self.name
-
 
 class Ingredient(NamedModel):
-    """Модель ингридиента."""
+    """Модель ингредиента."""
     measurement_unit = models.CharField(
         'единица измерения', max_length=LONG_LENGTH,
     )
@@ -78,9 +66,7 @@ class Ingredient(NamedModel):
 
 class Recipe(NamedModel):
     """Модель рецепта."""
-    pub_date = models.DateTimeField(
-        'дата добавления', auto_now_add=True,
-    )
+    pub_date = models.DateTimeField('дата добавления', auto_now_add=True)
     image = models.ImageField(
         'фотография рецепта',
         upload_to='food/recipes/%Y/%m/',
@@ -88,9 +74,7 @@ class Recipe(NamedModel):
     text = models.TextField('описание')
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=[
-            MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION),
-        ]
+        validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)],
     )
     author = models.ForeignKey(
         User,
@@ -114,7 +98,6 @@ class Recipe(NamedModel):
         related_name='favorites',
         verbose_name='наличие рецепта в списке избранного',
         blank=True,
-        null=True,
     )
     is_in_shopping_cart = models.ManyToManyField(
         User,
@@ -122,7 +105,6 @@ class Recipe(NamedModel):
         related_name='recipes_in_shopping_cart',
         verbose_name='наличие рецепта в списке покупок',
         blank=True,
-        null=True,
     )
     count_favorites = models.PositiveIntegerField(
         'количество добавлений в избранное',
@@ -146,15 +128,13 @@ class RecipeIngredient(models.Model):
     - `quantity`: Хранит количество ингридиента в условных еденицах,
         необходимое для приготовления рецепта.
     """
-    recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE,
-    )
-    ingredients = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE,
-    )
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(
         'количество ингридиента',
-        validators=[
-            MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION),
-        ]
+        validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)]
     )
+
+    class Meta:
+        verbose_name = 'ингредиент рецепта'
+        verbose_name_plural = 'ингредиенты рецептов'

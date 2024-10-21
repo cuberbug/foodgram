@@ -19,16 +19,24 @@ class User(AbstractUser):
     """Модель пользователя для "Фудграм".
 
     Расширяет базовую модель полями:
+    - аватар (изображение);
     - подписка на другий пользователей;
     - роль для управления уровнем доступа.
 
     Методы:
-        `is_admin`: Проверяет является ли пользователь администратором.
+        is_admin: Проверяет является ли пользователь администратором.
     """
     class UserRole(models.TextChoices):
         """Модель с описанием возможных ролей пользователя."""
         USER = 'user', _('Пользователь')
         ADMIN = 'admin', _('Администратор')
+
+    avatar = models.ImageField(
+        'аватар',
+        upload_to='users/avatars/%Y/%m/',
+        blank=True,
+        null=True,
+    )
 
     is_subscribed = models.ManyToManyField(
         'self',
@@ -36,7 +44,6 @@ class User(AbstractUser):
         db_table='subscription',
         related_name='subscriptions',
         blank=True,
-        null=True,
     )
     role = models.CharField(
         max_length=MAX_LENGTH_USER_ROLE,
@@ -50,7 +57,7 @@ class User(AbstractUser):
     @property
     @admin.display(boolean=True)
     def is_admin(self) -> bool:
-        """Проверяет является ли пользователь администратором."""
+        """Возвращает True, если роль пользователя – администратор."""
         return self.role == self.UserRole.ADMIN
 
     def __str__(self) -> str:
