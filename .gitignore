@@ -138,5 +138,6 @@ dmypy.json
 .idea
 .vscode
 
+# директории со статикой и медиа
 static/
 media/
