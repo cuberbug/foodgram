@@ -2,9 +2,10 @@
 Хранит сериализаторы, используемые для работы API.
 """
 import base64
+import binascii
 from typing import Any, Union
 
-from django.core.files.base import ContentFile, File
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 
@@ -16,7 +17,7 @@ class Base64ImageField(serializers.ImageField):
     декодировать их и сохранять как файлы.
     """
 
-    def to_internal_value(self, data: Union[str, File]) -> Any:
+    def to_internal_value(self, data: Union[str, ContentFile]) -> Any:
         """
         Преобразует данные из формата Base64 в объект ContentFile.
 
@@ -34,12 +35,30 @@ class Base64ImageField(serializers.ImageField):
         """
         match data:
             case str() if data.startswith('data:image'):
-                format, imgstr = data.split(';base64,')
+                try:
+                    format, imgstr = data.split(';base64,', maxsplit=1)
+                    if not imgstr:
+                        raise serializers.ValidationError(
+                            'Изображение не может быть пустым.'
+                        )
+                except ValueError:
+                    raise serializers.ValidationError(
+                        'Неверный формат изображения: ожидается base64.'
+                    )
+
                 ext = format.split('/')[-1]
-                data = ContentFile(
-                    base64.b64decode(imgstr), name=f'temp.{ext}'
-                )
+
+                try:
+                    decoded_img = base64.b64decode(imgstr)
+                except binascii.Error:
+                    raise serializers.ValidationError(
+                        'Некорректные данные base64. Проверьте входные данные.'
+                    )
+
+                data = ContentFile(decoded_img, name=f'temp.{ext}')
             case _:
-                pass  # Ничего не делаем, если данные не соответствуют шаблону
+                raise serializers.ValidationError(
+                    'Полученные данные не являются строкой с изображением.'
+                )
 
         return super().to_internal_value(data)

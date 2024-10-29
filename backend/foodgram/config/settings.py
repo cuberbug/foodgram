@@ -181,8 +181,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'static'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Django REST Framework
@@ -198,4 +198,16 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': env.int('PAGINATION_SIZE', 6),
+}
+
+
+# Djoser
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    # 'SERIALIZERS': {
+    #     'user': 'api.serializers.UserSerializer',
+    #     'current_user': 'api.serializers.UserSerializer',
+    # }
 }

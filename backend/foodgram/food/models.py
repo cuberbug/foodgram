@@ -38,7 +38,6 @@ class NamedModel(models.Model):
 
 class Tag(NamedModel):
     """Модель тегов."""
-    color = models.CharField('цвет', max_length=HEX_LENGTH)
     slug = models.SlugField('слаг', max_length=LONG_LENGTH, unique=True)
 
     class Meta:
