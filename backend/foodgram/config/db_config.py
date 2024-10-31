@@ -26,7 +26,7 @@ class ValidateModelName(Enum):
     Пример:
         MODEL = 'model'
     """
-    USER = 'user'
+    SUBSCRIPTION = 'subscription'
     RECIPE = 'recipe'
     TAG = 'tag'
     INGREDIENT = 'ingredient'
@@ -35,12 +35,12 @@ class ValidateModelName(Enum):
 Indexes: TypeAlias = tuple[models.Index | BrinIndex | HashIndex, ...]
 INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
 
-    ValidateModelName.USER: {
+    ValidateModelName.SUBSCRIPTION: {
         POSTGRESQL: (
-            HashIndex(('username',)),
+            HashIndex(('user', 'author')),
         ),
         SQLITE: (
-            models.Index(fields=('username',)),
+            models.Index(fields=('user', 'author')),
         ),
     },
 

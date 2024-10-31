@@ -1,64 +1,63 @@
 """
-Описывает универсальную модель пользователя.
+Модуль описывает универсальную модель пользователя и функционал подписок.
 
-Необходима для API приложения "Фудграм". Реализует функционал подписки
-пользователя на других пользователей и управление ролями, которые
-делят уровень доступа на базовый и административный.
+Основные классы:
+    - User: расширенная модель пользователя с дополнительным полем `avatar`.
+    - Subscription: представляет подписку одного пользователя на другого.
+
+Применение:
+    Используется в приложениях `food` и `api`.
 """
-from django.contrib import admin
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 from config.db_config import get_indexes_for_model
 
-MAX_LENGTH_USER_ROLE: int = 20
-
 
 class User(AbstractUser):
-    """Модель пользователя для "Фудграм".
-
-    Расширяет базовую модель полями:
-    - аватар (изображение);
-    - подписка на другий пользователей;
-    - роль для управления уровнем доступа.
-
-    Методы:
-        is_admin: Проверяет является ли пользователь администратором.
-    """
-    class UserRole(models.TextChoices):
-        """Модель с описанием возможных ролей пользователя."""
-        USER = 'user', _('Пользователь')
-        ADMIN = 'admin', _('Администратор')
-
+    """Расширенная модель пользователя."""
     avatar = models.ImageField(
         'аватар',
-        upload_to='users/avatars/%Y/%m/',
+        upload_to='users/',
         blank=True,
         null=True,
     )
 
-    is_subscribed = models.ManyToManyField(
-        'self',
-        symmetrical=False,
-        db_table='subscription',
-        related_name='subscriptions',
-        blank=True,
-    )
-    role = models.CharField(
-        max_length=MAX_LENGTH_USER_ROLE,
-        default=UserRole.USER,
-        choices=UserRole.choices,
-    )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
-        indexes = get_indexes_for_model('User')
-
-    @property
-    @admin.display(boolean=True)
-    def is_admin(self) -> bool:
-        """Возвращает True, если роль пользователя – администратор."""
-        return self.role == self.UserRole.ADMIN
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
     def __str__(self) -> str:
         return self.username
+
+
+class Subscription(models.Model):
+    """Модель пользовательской подписки."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='подписчик',
+    )
+    author = models.ForeignKey(
+        User,
+        related_name='subscribers',
+        on_delete=models.CASCADE,
+        verbose_name='автор',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        indexes = get_indexes_for_model('Subscription')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='unique_subscription',
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.user} подписался на {self.author}'
