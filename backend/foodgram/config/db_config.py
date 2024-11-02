@@ -3,12 +3,24 @@
 
 Возвращает подходящий вариант индексации для принятой в главную функцию модели.
 Использует константы из настроек для определения выбранной базы данных.
+
+Комментарий:
+    По факту этот модуль несёт в себе избыточный функционал для проекта.
+
+    В начале он казался отличной идеей, реализацией которой можно похвастаться
+    на ревью, но в итоге я совершил ошибку и побежал впереди паровоза:
+    сначала написал реализацию, а потом начал разбираться с
+    PostgreSQL-специфичными индексами (пригодился только BRIN).
+    В итоге модуль выглядит несколько чужеродно и неуклюже,
+    но я решил его оставить.
+
+    Надеюсь на понимание.
 """
 import logging
 from enum import Enum
 from typing import TypeAlias
 
-from django.contrib.postgres.indexes import BrinIndex, HashIndex
+from django.contrib.postgres.indexes import BrinIndex
 from django.db import models
 
 from config.settings import DATABASE_NAME, POSTGRESQL, SQLITE
@@ -27,20 +39,39 @@ class ValidateModelName(Enum):
         MODEL = 'model'
     """
     SUBSCRIPTION = 'subscription'
-    RECIPE = 'recipe'
     TAG = 'tag'
     INGREDIENT = 'ingredient'
+    RECIPE = 'recipe'
+    RECIPEINGREDIENT = 'recipeingredient'
 
 
-Indexes: TypeAlias = tuple[models.Index | BrinIndex | HashIndex, ...]
+Indexes: TypeAlias = tuple[models.Index | BrinIndex, ...]
 INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
 
     ValidateModelName.SUBSCRIPTION: {
         POSTGRESQL: (
-            HashIndex(('user', 'author')),
+            models.Index(fields=('user', 'author')),
         ),
         SQLITE: (
             models.Index(fields=('user', 'author')),
+        ),
+    },
+
+    ValidateModelName.TAG: {
+        POSTGRESQL: (
+            models.Index(fields=('name',)),
+        ),
+        SQLITE: (
+            models.Index(fields=('name',)),
+        ),
+    },
+
+    ValidateModelName.INGREDIENT: {
+        POSTGRESQL: (
+            models.Index(fields=('name',)),
+        ),
+        SQLITE: (
+            models.Index(fields=('name',)),
         ),
     },
 
@@ -51,30 +82,27 @@ INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
                 autosummarize=True,
                 pages_per_range=8,
             ),
-            HashIndex(('name',)),
+            models.Index(fields=('name')),
+            models.Index(fields=('count_favorites')),
         ),
         SQLITE: (
-            models.Index(fields=('name',)),
+            models.Index(fields=('pub_date')),
+            models.Index(fields=('name')),
+            models.Index(fields=('count_favorites')),
         ),
     },
 
-    ValidateModelName.TAG: {
+    ValidateModelName.RECIPEINGREDIENT: {
         POSTGRESQL: (
-            HashIndex(('name',)),
+            models.Index(fields=('recipe', 'ingredient')),
+            models.Index(fields=('ingredient', 'recipe')),
         ),
         SQLITE: (
-            models.Index(fields=('name',)),
+            models.Index(fields=('recipe', 'ingredient')),
+            models.Index(fields=('ingredient', 'recipe')),
         ),
     },
 
-    ValidateModelName.INGREDIENT: {
-        POSTGRESQL: (
-            HashIndex(('name',)),
-        ),
-        SQLITE: (
-            models.Index(fields=('name',)),
-        ),
-    }
 }
 
 

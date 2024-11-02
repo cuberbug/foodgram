@@ -3,9 +3,9 @@
 
 Список моделей:
     - Recipe: рецепт;
-    - Ingredient: ингридиент;
+    - Ingredient: ингредиент;
     - Tag: теги;
-    - RecipeIngredient: расширенная связь рецепта с ингридиентом.
+    - RecipeIngredient: расширенная связь рецепта с ингредиентом.
 
 Таблицы, созданные под капотом Django:
     - favorite: связь рецепта с `User` для реализации избранного;
@@ -56,8 +56,8 @@ class Ingredient(NamedModel):
     class Meta:
         indexes = get_indexes_for_model('Ingredient')
         ordering = ('name',)
-        verbose_name = 'ингридиент'
-        verbose_name_plural = 'ингридиенты'
+        verbose_name = 'ингредиент'
+        verbose_name_plural = 'ингредиенты'
 
     def __str__(self) -> str:
         return f'{self.name} ({self.measurement_unit})'
@@ -89,7 +89,7 @@ class Recipe(NamedModel):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        verbose_name='ингридиенты',
+        verbose_name='ингредиенты',
     )
     is_favorited = models.ManyToManyField(
         User,
@@ -121,19 +121,26 @@ class Recipe(NamedModel):
 
 
 class RecipeIngredient(models.Model):
-    """Модель для связи рецепта и ингридиента.
+    """Модель для связи рецепта и ингредиента.
 
     Помимо ключей для связи имеет дополнительное поле:
-    - `quantity`: Хранит количество ингридиента в условных еденицах,
+    - `quantity`: Хранит количество ингредиента в условных единицах,
         необходимое для приготовления рецепта.
     """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(
-        'количество ингридиента',
+        'количество ингредиента',
         validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)]
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name='unique_recipe_ingredient',
+            ),
+        ]
+        indexes = get_indexes_for_model('RecipeIngredient')
         verbose_name = 'ингредиент рецепта'
         verbose_name_plural = 'ингредиенты рецептов'
