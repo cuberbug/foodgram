@@ -2,12 +2,12 @@
 Описывает отображение в админке связанных с едой моделей.
 
 Модели:
-- `RecipeAdmin`: дополнительно подсчитывает и выводит информацию о том,
+    - RecipeAdmin: дополнительно подсчитывает и выводит информацию о том,
     сколько пользователей добавили рецепт в избранное.
-- `RecipeAuthorInline`: подключает отображение пользователя,
+    - RecipeAuthorInline: подключает отображение пользователя,
     который является автором рецепта.
-- `IngredientAdmin`: отображение ингредиентов.
-- `TagAdmin`: отображение тегов.
+    - IngredientAdmin: отображение ингредиентов.
+    - TagAdmin: отображение тегов.
 """
 from typing import Any
 
@@ -17,7 +17,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 
-from food.models import Ingredient, Recipe, Tag
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()
 
@@ -28,6 +28,12 @@ class RecipeAuthorInline(admin.TabularInline):
     fk_name = 'author'
 
 
+class RecipeIngredientInline(admin.TabularInline):
+    """Вставка с отображением ингридиента."""
+    model = RecipeIngredient
+    fields = ('ingredient', 'quantity')
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     """Отображение модели `Recipe` в админ части сайта."""
@@ -35,37 +41,40 @@ class RecipeAdmin(admin.ModelAdmin):
         'pub_date',
         'name',
         'author',
-        'is_favorited_count',
+        'cooking_time',
+        'favorites_count',
+        'shopping_cart_count',
     )
-    list_editable = (
-        'pub_date',
-        'name',
-        'author',
-    )
-    search_fields = (
-        'pub_date',
-        'name',
-        'author__username',
-    )
-    list_filter = ('author', 'name', 'tags')
-    inlines = (
-        RecipeAuthorInline,
-    )
+    list_filter = ('tags',)
+    search_fields = ('name', 'author__username')
+    inlines = (RecipeAuthorInline, RecipeIngredientInline)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         queryset = super().get_queryset(request)
         return queryset.annotate(
-            is_favorited_count=Count('is_favorited')
+            _favorites_count=Count('is_favorited'),
+            _shopping_cart_count=Count('is_in_shopping_cart')
         )
 
     @admin.display(
-        description='Количество добавлений в избранное'
+        description='Количество добавлений в избранное',
+        ordering='_favorites_count',
     )
-    def is_favorited_count(self, obj):
+    def favorites_count(self, obj):
         """Возвращает количество пользователей,
         добавивших рецепт в избранное.
         """
-        return obj.is_favorited.count()
+        return obj._favorites_count
+
+    @admin.display(
+        description='В корзине у пользователей',
+        ordering='_shopping_cart_count',
+    )
+    def shopping_cart_count(self, obj):
+        """Возвращает количество пользователей,
+        добавивших рецепт в список покупок.
+        """
+        return obj._shopping_cart_count
 
 
 @admin.register(Ingredient)
@@ -73,21 +82,10 @@ class IngredientAdmin(admin.ModelAdmin):
     """Отображение модели `Ingredient` в админ части сайта."""
     list_display = ('__str__',)
     search_fields = ('name',)
-    list_filter = ('name',)
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     """Отображение модели `Tag` в админ части сайта."""
-    list_display = (
-        'name',
-        'slug',
-        'color',
-    )
-    list_editable = (
-        'name',
-        'slug',
-        'color',
-    )
+    list_display = ('name', 'slug')
     search_fields = ('name',)
-    list_filter = ('name',)

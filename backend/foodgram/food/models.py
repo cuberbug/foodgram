@@ -16,7 +16,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from config.db_config import get_indexes_for_model
+from config.db_indexes import get_indexes_for_model
 
 HEX_LENGTH: int = 7
 LONG_LENGTH: int = 200
@@ -68,11 +68,11 @@ class Recipe(NamedModel):
     pub_date = models.DateTimeField('дата добавления', auto_now_add=True)
     image = models.ImageField(
         'фотография рецепта',
-        upload_to='food/recipes/%Y/%m/',
+        upload_to='food/recipes/%Y/%m/',  # подумать <<
     )
     text = models.TextField('описание')
     cooking_time = models.PositiveSmallIntegerField(
-        'Время приготовления',
+        'время приготовления',
         validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)],
     )
     author = models.ForeignKey(
@@ -104,10 +104,6 @@ class Recipe(NamedModel):
         related_name='recipes_in_shopping_cart',
         verbose_name='наличие рецепта в списке покупок',
         blank=True,
-    )
-    count_favorites = models.PositiveIntegerField(
-        'количество добавлений в избранное',
-        default=0,
     )
 
     class Meta:

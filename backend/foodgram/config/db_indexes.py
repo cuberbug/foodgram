@@ -83,12 +83,10 @@ INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
                 pages_per_range=8,
             ),
             models.Index(fields=('name')),
-            models.Index(fields=('count_favorites')),
         ),
         SQLITE: (
             models.Index(fields=('pub_date')),
             models.Index(fields=('name')),
-            models.Index(fields=('count_favorites')),
         ),
     },
 

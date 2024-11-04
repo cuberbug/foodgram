@@ -11,7 +11,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-import os.path
+import os.path  # подумать <<
 from pathlib import Path
 
 from environs import Env

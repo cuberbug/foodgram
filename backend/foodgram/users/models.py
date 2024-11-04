@@ -11,7 +11,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from config.db_config import get_indexes_for_model
+from config.db_indexes import get_indexes_for_model
 
 
 class User(AbstractUser):
