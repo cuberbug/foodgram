@@ -66,14 +66,14 @@ class Ingredient(NamedModel):
 class Recipe(NamedModel):
     """Модель рецепта."""
     pub_date = models.DateTimeField('дата добавления', auto_now_add=True)
-    image = models.ImageField(
-        'фотография рецепта',
-        upload_to='food/recipes/%Y/%m/',  # подумать <<
-    )
-    text = models.TextField('описание')
     cooking_time = models.PositiveSmallIntegerField(
         'время приготовления',
         validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)],
+    )
+    text = models.TextField('описание')
+    image = models.ImageField(
+        'фотография рецепта',
+        upload_to='food/recipes/',
     )
     author = models.ForeignKey(
         User,
@@ -119,9 +119,8 @@ class Recipe(NamedModel):
 class RecipeIngredient(models.Model):
     """Модель для связи рецепта и ингредиента.
 
-    Помимо ключей для связи имеет дополнительное поле:
-    - `quantity`: Хранит количество ингредиента в условных единицах,
-        необходимое для приготовления рецепта.
+    Имеет дополнительное поле `quantity`, в котором хранится количество
+    ингредиента в условных единицах, необходимое для приготовления рецепта.
     """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
@@ -138,5 +137,5 @@ class RecipeIngredient(models.Model):
             ),
         ]
         indexes = get_indexes_for_model('RecipeIngredient')
-        verbose_name = 'ингредиент рецепта'
-        verbose_name_plural = 'ингредиенты рецептов'
+        verbose_name = 'Ингредиент рецепта'
+        verbose_name_plural = 'Ингредиенты рецептов'

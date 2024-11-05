@@ -5,8 +5,15 @@ import base64
 import binascii
 from typing import Any, Union
 
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+
+from users.models import Subscription
+
+
+User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):
@@ -62,3 +69,28 @@ class Base64ImageField(serializers.ImageField):
                 )
 
         return super().to_internal_value(data)
+
+
+class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        model = User
+        fields = (User.REQUIRED_FIELDS,) + (User.USERNAME_FIELD,)
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Subscription.objects.filter(
+                user=request.user,
+                author=obj
+            ).exists()
+        return False
+
+
+class CustomUserCreateSerializer(UserCreateSerializer):
+    class Meta:
+        model = User
+        fields = (User.REQUIRED_FIELDS,) + (
+            User.USERNAME_FIELD, 'password',
+        )
