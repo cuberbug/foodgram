@@ -18,7 +18,7 @@ class User(AbstractUser):
     """Расширенная модель пользователя."""
     avatar = models.ImageField(
         'аватар',
-        upload_to='users/',
+        upload_to='avatars/',
         blank=True,
         null=True,
     )

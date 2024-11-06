@@ -9,7 +9,10 @@ source "${SCRIPT_DIR}/shell_config.sh"
 
 # Запуск Docker
 echo -e "${BLUE_DECOR} Запуск службы Docker..."
-sudo systemctl start docker.service
+if ! sudo systemctl start docker.service; then
+    echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось запустить Docker.${D_CANCEL}"
+    exit 1
+fi
 echo -e "${BLUE_DECOR} ${D_GREEN}Docker успешно запущен.${D_CANCEL}"
 
 # Запуск проекта
