@@ -16,11 +16,14 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
+from api.validators import USERNAME_EMAIL_VALIDATOR
 
 
 User = get_user_model()
 
 MIN_COOKING_TIME: int = 1
+MAX_LENGTH: int = 150
+BIG_MAX_LENGTH: int = 254
 
 
 # DATA >>
@@ -110,19 +113,24 @@ class CustomUserSerializer(UserSerializer):
         if request and request.user.is_authenticated:
             return Subscription.objects.filter(
                 user=request.user, author=obj
-            ).exists()
+            ).only('id').exists()
         return False
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
     """Создание нового пользователя."""
+    username = serializers.CharField(
+        max_length=MAX_LENGTH,
+        validators=[USERNAME_EMAIL_VALIDATOR],
+    )
+    email = serializers.EmailField(
+        max_length=BIG_MAX_LENGTH,
+        validators=[USERNAME_EMAIL_VALIDATOR],
+    )
+
     class Meta:
         model = User
         fields = (*User.REQUIRED_FIELDS, User.USERNAME_FIELD, 'password')
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'avatar': {'required': False},
-        }
 
     def to_representation(self, instance):
         serializer = ShortUserSerializer(instance)
@@ -193,7 +201,7 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
     )
-    quantity = serializers.IntegerField(min_value=1)  # << !!! <<============
+    quantity = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
@@ -241,9 +249,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         пользователя.
         """
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return queryset.filter(user=request.user.id).exists()
-        return False
+        return queryset.filter(
+            user=request.user, user__is_authenticated=True
+        ).exists() if request else False
 
     def get_is_favorited(self, obj):
         """Проверка наличия рецепта в избранном."""
@@ -277,7 +285,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def validate_ingredients(self, ingredients):
+    def _validate_ingredients(self, ingredients):
         if not bool(ingredients):
             raise ValidationError(
                 'Поле ингредиенты обязательно для заполнения'
@@ -287,7 +295,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты не должны повторяться.')
         return ingredients
 
-    def validate_tags(self, tags):
+    def _validate_tags(self, tags):
         if not bool(tags):
             raise ValidationError('Поле теги обязательно для заполнения')
         if len(tags) != len(set(tags)):
@@ -297,18 +305,19 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         tags = data.get('tags')
         ingredients = data.get('ingredients')
-        validated_tags = self.validate_tags(tags)
-        validated_ingredients = self.validate_ingredients(ingredients)
+        validated_tags = self._validate_tags(tags)
+        validated_ingredients = self._validate_ingredients(ingredients)
         data['tags'] = validated_tags
         data['ingredients'] = validated_ingredients
         return data
 
+    @transaction.atomic
     def _create_ingredients(self, recipe, ingredients):
         RecipeIngredient.objects.bulk_create(
             [
                 RecipeIngredient(
                     recipe=recipe,
-                    ingredient=Ingredient.objects.get(id=ingredient['id']),
+                    ingredient=ingredient['id'],
                     quantity=ingredient['quantity']
                 )
                 for ingredient in ingredients
