@@ -86,13 +86,6 @@ class Base64ImageField(serializers.ImageField):
 
 # User >>
 
-class ShortUserSerializer(serializers.ModelSerializer):
-    """Краткая информация о пользователе."""
-    class Meta:
-        model = User
-        fields = (*User.REQUIRED_FIELDS, User.USERNAME_FIELD, 'id')
-
-
 class CustomUserSerializer(UserSerializer):
     """Сериализатор кастомного пользователя."""
     avatar = Base64ImageField(required=False, allow_null=True)
@@ -133,7 +126,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         fields = (*User.REQUIRED_FIELDS, User.USERNAME_FIELD, 'password')
 
     def to_representation(self, instance):
-        serializer = ShortUserSerializer(instance)
+        serializer = CustomUserSerializer(instance)
         return serializer.data
 
 

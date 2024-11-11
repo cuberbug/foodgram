@@ -13,6 +13,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
+from api.filters import IngredientFilter, RecipeFilter
 from api.serializers import (
     CustomUserCreateSerializer,
     CustomUserSerializer,
@@ -20,9 +21,9 @@ from api.serializers import (
     RecipeSerializer,
     SubscriptionCreateSerializer,
     TagSerializer,
-    # ShortRecipeSerializer,
     CreateRecipeSerializer
 )
+from api.pagination import CustomPageNumberPagination
 from food.models import Ingredient, Recipe, Tag
 from users.models import Subscription
 
@@ -35,7 +36,6 @@ User = get_user_model()
 class CustomUserViewSet(UserViewSet):
     """Представление для модели пользователя."""
     queryset = User.objects.all()
-    # serializer_class = CustomUserSerializer
     pagination_class = LimitOffsetPagination
 
     def get_permissions(self):
@@ -47,6 +47,38 @@ class CustomUserViewSet(UserViewSet):
         if self.request.method == 'POST':
             return CustomUserCreateSerializer
         return CustomUserSerializer
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        user = request.user
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=['PUT'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+        url_path='me/avatar',
+    )
+    def avatar(self, request):
+        serializer = CustomUserSerializer(
+            instance=self.get_instance(),
+            data=request.data,
+            partial=True,
+            context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @avatar.mapping.delete
+    def delete_avatar(self, request):
+        self.request.user.avatar.delete()  # type: ignore
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -89,15 +121,36 @@ class CustomUserViewSet(UserViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# Tag Views >>
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Представление для модели тега."""
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+# Ingredient Views >>
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Представление для модели ингредиента."""
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
 # Recipe Views >>
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Представление для модели рецепта."""
     queryset = Recipe.objects.all()
-    pagination_class = LimitOffsetPagination
-    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['tags', 'author']
+    filterset_class = RecipeFilter
+    pagination_class = CustomPageNumberPagination
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
         """Возвращает соответствующий сериализатор в зависимости от действия.
@@ -111,7 +164,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     @action(
-        detail=True, methods=['post'], permission_classes=[IsAuthenticated]
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk=None):
         """Добавление рецепта в избранное."""
@@ -142,7 +197,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=True, methods=['post'], permission_classes=[IsAuthenticated]
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk=None):
         """Добавление рецепта в корзину покупок."""
@@ -171,23 +228,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         recipe.is_in_shopping_cart.remove(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# Ingredient Views >>
-
-class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    """Представление для модели ингредиента."""
-    queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
-    filter_backends = [DjangoFilterBackend]
-    search_fields = ['name']
-
-
-# Tag Views >>
-
-class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    """Представление для модели тега."""
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
-    filter_backends = [DjangoFilterBackend]
-    search_fields = ['name']

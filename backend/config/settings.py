@@ -17,6 +17,11 @@ from pathlib import Path
 from environs import Env
 
 
+# Управление переменными окружения
+
+env = Env()
+env.read_env()
+
 # Basic variables
 
 AUTH_USER_MODEL = 'users.User'
@@ -24,12 +29,9 @@ ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+PAGINATION_SIZE = env.int('PAGINATION_SIZE', 6)
 
 # Security settings
-
-env = Env()
-env.read_env()
 
 SECRET_KEY = env.str('DJANGO_SECRET_KEY')
 DEBUG = env.bool('DEBUG')
@@ -198,7 +200,7 @@ REST_FRAMEWORK = {
     ],
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': env.int('PAGINATION_SIZE', 6),
+    'PAGE_SIZE': PAGINATION_SIZE,
 }
 
 
