@@ -78,15 +78,16 @@ INDEXES_FOR_MODELS: dict[ValidateModelName, dict[str, Indexes]] = {
     ValidateModelName.RECIPE: {
         POSTGRESQL: (
             BrinIndex(
-                ('pub_date',),
+                name='recipe_pub_date',
+                fields=('pub_date',),
                 autosummarize=True,
                 pages_per_range=8,
             ),
-            models.Index(fields=('name')),
+            models.Index(fields=('name',)),
         ),
         SQLITE: (
-            models.Index(fields=('pub_date')),
-            models.Index(fields=('name')),
+            models.Index(fields=('pub_date',)),
+            models.Index(fields=('name',)),
         ),
     },
 

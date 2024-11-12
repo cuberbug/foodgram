@@ -16,6 +16,7 @@ from config.db_indexes import get_indexes_for_model
 
 class User(AbstractUser):
     """Расширенная модель пользователя."""
+    email = models.EmailField('электронная почта', unique=True)
     avatar = models.ImageField(
         'аватар',
         upload_to='avatars/',

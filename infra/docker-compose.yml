@@ -2,22 +2,25 @@ volumes:
   pg_data:
   static:
   media:
+  logs:
 
 services:
 
   db:
+    container_name: db
     image: postgres:17
-    env_file: ../.env
+    restart: on-failure
     volumes:
       - pg_data:/var/lib/postgresql/data
 
   backend:
     container_name: foodgram-backend
-    env_file: ../.env
+    env_file: .env
     build: ../backend/
     volumes:
-      - static:/static
+      - static:/app/static
       - media:/app/media
+      - logs:/app/logs
     depends_on:
       - db
 
@@ -30,13 +33,12 @@ services:
 
   nginx:
     container_name: foodgram-proxy
-    env_file: ../.env
     build: ../nginx/
     ports:
-      - 8000:80
+      - ${GATEWAY_PORTS_DEV}
     volumes:
       - static:/static
-      - media:/media
+      - media:/app/media
       - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - frontend

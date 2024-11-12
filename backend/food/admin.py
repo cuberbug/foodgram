@@ -42,7 +42,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     list_filter = ('tags',)
     search_fields = ('name', 'author__username')
-    inlines = (RecipeAuthorInline, RecipeIngredientInline)
+    inlines = (RecipeIngredientInline,)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         queryset = super().get_queryset(request)
