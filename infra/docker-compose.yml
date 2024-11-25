@@ -4,10 +4,6 @@ volumes:
   media:
   logs:
 
-# networks:
-#   foodgram-network:
-#     driver: bridge
-
 services:
 
   db:
@@ -20,8 +16,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # networks:
-    #   - foodgram-network
     volumes:
       - pg_data:/var/lib/postgresql/data
 
@@ -41,8 +35,6 @@ services:
       - logs:/app/logs
     depends_on:
       - db
-    # networks:
-    #   - foodgram-network
 
   frontend:
     container_name: foodgram-front
@@ -66,5 +58,3 @@ services:
     depends_on:
       - frontend
       - backend
-    # networks:
-    #   - foodgram-network
