@@ -139,11 +139,10 @@ DATABASES = {
     },
     POSTGRESQL: {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env.str('POSTGRES_NAME', 'django'),
+        'NAME': env.str('POSTGRES_DB', 'django'),
         'USER': env.str('POSTGRES_USER', 'django'),
         'PASSWORD': env.str('POSTGRES_PASSWORD', ''),
-        'HOST': env.str('POSTGRES_HOST', 'db'),
-        # 'HOST': 'db',
+        'HOST': env.str('POSTGRES_HOST', ''),
         'PORT': env.int('POSTGRES_PORT', 5432),
     }
 }
@@ -182,7 +181,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_URL = 'media/'

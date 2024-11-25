@@ -4,12 +4,24 @@ volumes:
   media:
   logs:
 
+# networks:
+#   foodgram-network:
+#     driver: bridge
+
 services:
 
   db:
     container_name: db
+    env_file: .env
     image: postgres:17
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$POSTGRES_PASSWORD pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # networks:
+    #   - foodgram-network
     volumes:
       - pg_data:/var/lib/postgresql/data
 
@@ -17,12 +29,20 @@ services:
     container_name: foodgram-backend
     env_file: .env
     build: ../backend/
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - static:/app/static
       - media:/app/media
       - logs:/app/logs
     depends_on:
       - db
+    # networks:
+    #   - foodgram-network
 
   frontend:
     container_name: foodgram-front
@@ -30,9 +50,12 @@ services:
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
+    depends_on:
+      - backend
 
   nginx:
     container_name: foodgram-proxy
+    env_file: .env
     build: ../nginx/
     ports:
       - ${GATEWAY_PORTS_DEV}
@@ -43,3 +66,5 @@ services:
     depends_on:
       - frontend
       - backend
+    # networks:
+    #   - foodgram-network

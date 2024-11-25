@@ -10,3 +10,21 @@ D_BOLD="\e[1m"
 D_CANCEL="\e[0m"
 
 BLUE_DECOR="${BOLD_DARK_BLUE}::${D_CANCEL}"
+
+# === Функции ===
+
+# Запрашивает подтверждение выполнения действий, обёрнутых этой функцией.
+# Принимает строку, которая является запросом на подтверждение.
+confirm() {
+    local message=$1
+    echo -en "${D_BOLD}${message}${D_CANCEL} [Y/n]? (по умолчанию Y): "
+    read -r response
+    case "$response" in
+        [Yy]* | "") return 0 ;;  # По умолчанию — "да"
+        [Nn]* ) return 1 ;;      # "Нет" — не выполнять
+        *) 
+            echo -e "${BLUE_DECOR} ${D_ORANGE}Неверный ввод, попробуйте снова.${D_CANCEL}"
+            confirm "$message"  # Рекурсия до правильного ввода
+        ;;
+    esac
+}
