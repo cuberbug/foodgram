@@ -15,6 +15,7 @@ fi
 echo -e "${BLUE_DECOR} Запуск службы Docker..."
 if ! sudo systemctl start docker.service; then
     echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось запустить Docker.${D_CANCEL}"
+    echo -e "${BLUE_DECOR} Возможно ${D_ORANGE}Docker${D_CANCEL} не установлен или не настроен его демон."
     exit 1
 fi
 echo -e "${BLUE_DECOR} ${D_GREEN}Docker успешно запущен.${D_CANCEL}"
@@ -33,6 +34,7 @@ fi
 echo -e "${BLUE_DECOR} Запуск локальной сборки проекта в Docker-Compose..."
 if ! sudo docker-compose -f ${SCRIPT_DIR}/docker-compose.yml up -d "$@"; then
     echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось запустить проект.${D_CANCEL}"
+    echo -e "${BLUE_DECOR} Возможно ${D_ORANGE}Docker-Compose${D_CANCEL} не установлен, проверьте его наличие в системе."
     exit 1
 fi
 echo -e "${BLUE_DECOR} ${D_GREEN}Проект успешно запущен.${D_CANCEL}"
