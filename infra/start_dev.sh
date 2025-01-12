@@ -43,7 +43,7 @@ echo -e "${BLUE_DECOR} ${D_GREEN}Проект успешно запущен.${D_
 # Создать миграции
 if confirm "Создать миграции makemigrations"; then
     echo -e "${BLUE_DECOR} Выполнение makemigrations..."
-    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py makemigrations; then
+    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py makemigrations > /dev/null 2>&1; then
         echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось выполнить миграции.${D_CANCEL}"
         exit 1
     fi
@@ -56,7 +56,7 @@ fi
 # Применить миграции
 if confirm "Применить миграции"; then
     echo -e "${BLUE_DECOR} Выполнение migrate..."
-    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py migrate; then
+    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py migrate > /dev/null 2>&1; then
         echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось выполнить миграции.${D_CANCEL}"
         exit 1
     fi
@@ -88,4 +88,17 @@ if confirm "Создать суперпользователя"; then
     fi
 else
     echo -e "${BLUE_DECOR} ${D_ORANGE}Пропуск создания суперпользователя.${D_CANCEL}"
+fi
+
+
+# Загрузка ингридиентов из CSV-файла
+if confirm "Загрузить ингредиенты в базу данных"; then
+    echo -e "${BLUE_DECOR} Загрузка ингредиентов в базу данных..."
+    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py load_ingredients; then
+        echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось загрузить ингредиенты.${D_CANCEL}"
+        exit 1
+    fi
+    echo -e "${BLUE_DECOR} ${D_GREEN}Ингредиенты успешно загружены.${D_CANCEL}"
+else
+    echo -e "${BLUE_DECOR} ${D_ORANGE}Пропуск загрузки ингредиентов.${D_CANCEL}"
 fi

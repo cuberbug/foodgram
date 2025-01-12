@@ -1,6 +1,7 @@
 volumes:
   pg_data:
-  static:
+  backend_volume:
+  front_volume:
   media:
   logs:
 
@@ -30,7 +31,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - static:/app/static
+      - backend_volume:/app/backend_static
       - media:/app/media
       - logs:/app/logs
     depends_on:
@@ -39,9 +40,8 @@ services:
   frontend:
     container_name: foodgram-front
     build: ../frontend
-    command: cp -r /app/build/. /static/
     volumes:
-      - static:/static
+      - front_volume:/app/result_build/build
     depends_on:
       - backend
 
@@ -52,7 +52,8 @@ services:
     ports:
       - ${GATEWAY_PORTS_DEV}
     volumes:
-      - static:/static
+      - backend_volume:/app/backend_static
+      - front_volume:/app/result_build/build
       - media:/app/media
       - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:

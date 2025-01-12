@@ -19,7 +19,7 @@ BLUE_DECOR="${BOLD_DARK_BLUE}::${D_CANCEL}"
 # Принимает строку, которая является запросом на подтверждение.
 confirm() {
     local message=$1
-    echo -en "${BLUE_DECOR} ${D_BOLD}${message}${D_CANCEL} [Y/n]? (По умолчанию: Y): "
+    echo -en "${BLUE_DECOR} ${D_BOLD}${message} [Y/n]?${D_CANCEL} (По умолчанию: Y): "
     read -r response
     case "$response" in
         [Yy]* | "") return 0 ;;  # По умолчанию — "да"
