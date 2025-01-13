@@ -30,3 +30,19 @@ confirm() {
         ;;
     esac
 }
+
+# Запрашивает подтверждение на выполнение действия, как и confirm,
+# но по умолчанию установлен вариант "N", то есть отказ.
+refuse() {
+    local message=$1
+    echo -en "${BLUE_DECOR} ${D_BOLD}${message} [y/N]?${D_CANCEL} (По умолчанию: N): "
+    read -r response
+    case "$response" in
+        [Yy]* ) return 0 ;;
+        [Nn]* | "") return 1 ;;  # "Нет" — не выполнять (по умолчанию)
+        *) 
+            echo -e "${BLUE_DECOR} ${D_ORANGE}Неверный ввод, попробуйте снова.${D_CANCEL}"
+            confirm "$message"   # Рекурсия до правильного ввода
+        ;;
+    esac
+}

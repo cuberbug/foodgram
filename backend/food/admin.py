@@ -26,7 +26,7 @@ class RecipeAuthorInline(admin.TabularInline):
 class RecipeIngredientInline(admin.TabularInline):
     """Вставка с отображением ингридиента."""
     model = RecipeIngredient
-    fields = ('ingredient', 'quantity')
+    fields = ('ingredient', 'amount')
 
 
 @admin.register(Recipe)

@@ -186,7 +186,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'name', 'measurement_unit', 'quantity')
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
@@ -194,11 +194,11 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
     )
-    quantity = serializers.IntegerField()
+    amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'quantity')
+        fields = ('id', 'amount')
 
 
 # Recipe >>
@@ -242,9 +242,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         пользователя.
         """
         request = self.context.get('request')
-        return queryset.filter(
-            user=request.user, user__is_authenticated=True
-        ).exists() if request else False
+        if request and request.user.is_authenticated:
+            return queryset.filter(id=request.user.id).exists()
+        return False
 
     def get_is_favorited(self, obj):
         """Проверка наличия рецепта в избранном."""
@@ -311,7 +311,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 RecipeIngredient(
                     recipe=recipe,
                     ingredient=ingredient['id'],
-                    quantity=ingredient['quantity']
+                    amount=ingredient['amount']
                 )
                 for ingredient in ingredients
             ]

@@ -4,7 +4,8 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Подключает оформление и функции.
-# confirm "str": Обёртка, которая запрашивает подтверждение выполняемых действий.
+# confirm "str": Обёртка, которая запрашивает подтверждение выполняемых действий (по умолчанию "Y").
+# refuse "str": Обёртка, аналогичная confirm, только со значением по умолчанию "N".
 if ! source "${SCRIPT_DIR}/shell_config.sh"; then
     echo "Не удалось подключить shell_config.sh. Проверьте путь!" >&2
     exit 1
@@ -80,7 +81,7 @@ fi
 
 
 # Создание стандартного суперпользователя
-if confirm "Создать суперпользователя"; then
+if refuse "Создать суперпользователя"; then
     echo -e "${BLUE_DECOR} Создание суперпользователя..."
     if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py create_superuser; then
         echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось создать суперпользователя.${D_CANCEL}"
@@ -92,10 +93,12 @@ fi
 
 
 # Загрузка ингридиентов из CSV-файла
-if confirm "Загрузить ингредиенты в базу данных"; then
+if refuse "Загрузить ингредиенты в базу данных"; then
     echo -e "${BLUE_DECOR} Загрузка ингредиентов в базу данных..."
-    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py load_ingredients; then
+    if ! sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py load_ingredients > /dev/null 2>&1; then
         echo -e "${BLUE_DECOR} ${D_DARK_RED}Не удалось загрузить ингредиенты.${D_CANCEL}"
+        echo -e "${BLUE_DECOR} ${D_DARK_RED}Для получения отладочной информации запустите команду в ручном режиме:${D_CANCEL}"
+        echo -e "${D_ORANGE}sudo docker compose -f ${SCRIPT_DIR}/docker-compose.yml exec backend python manage.py load_ingredients${D_CANCEL}"
         exit 1
     fi
     echo -e "${BLUE_DECOR} ${D_GREEN}Ингредиенты успешно загружены.${D_CANCEL}"

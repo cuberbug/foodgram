@@ -119,12 +119,12 @@ class Recipe(NamedModel):
 class RecipeIngredient(models.Model):
     """Модель для связи рецепта и ингредиента.
 
-    Имеет дополнительное поле `quantity`, в котором хранится количество
+    Имеет дополнительное поле `amount`, в котором хранится количество
     ингредиента в условных единицах, необходимое для приготовления рецепта.
     """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    quantity = models.PositiveSmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         'количество ингредиента',
         validators=[MinValueValidator(POSITIVE_VALUE_FOR_VALIDATION)]
     )

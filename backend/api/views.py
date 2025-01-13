@@ -128,6 +128,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = None  # Убрать пагинацию
 
 
 # Ingredient Views >>
@@ -139,6 +140,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientFilter
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = None  # Убрать пагинацию
 
 
 # Recipe Views >>
