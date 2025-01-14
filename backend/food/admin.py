@@ -36,6 +36,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'pub_date',
         'name',
         'author',
+        'short_code',
         'cooking_time',
         'favorites_count',
         'shopping_cart_count',

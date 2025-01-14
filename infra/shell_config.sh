@@ -4,6 +4,7 @@
 
 # Оформление (D - декор)
 BOLD_DARK_BLUE="\e[1;94m"
+BOLD_ORANGE="\e[1;33m"
 
 D_GREEN="\e[92m"
 D_DARK_RED="\e[31m"
@@ -12,6 +13,7 @@ D_BOLD="\e[1m"
 D_CANCEL="\e[0m"
 
 BLUE_DECOR="${BOLD_DARK_BLUE}::${D_CANCEL}"
+ORANGE_DECOR="${BOLD_ORANGE}::${D_CANCEL}"
 
 # === Функции ===
 
@@ -19,7 +21,7 @@ BLUE_DECOR="${BOLD_DARK_BLUE}::${D_CANCEL}"
 # Принимает строку, которая является запросом на подтверждение.
 confirm() {
     local message=$1
-    echo -en "${BLUE_DECOR} ${D_BOLD}${message} [Y/n]?${D_CANCEL} (По умолчанию: Y): "
+    echo -en "${BLUE_DECOR} ${D_BOLD}${message}?${D_CANCEL} [Y/n]: "
     read -r response
     case "$response" in
         [Yy]* | "") return 0 ;;  # По умолчанию — "да"
@@ -35,14 +37,14 @@ confirm() {
 # но по умолчанию установлен вариант "N", то есть отказ.
 refuse() {
     local message=$1
-    echo -en "${BLUE_DECOR} ${D_BOLD}${message} [y/N]?${D_CANCEL} (По умолчанию: N): "
+    echo -en "${ORANGE_DECOR} ${BOLD_ORANGE}${message}?${D_CANCEL} [y/N]: "
     read -r response
     case "$response" in
         [Yy]* ) return 0 ;;
         [Nn]* | "") return 1 ;;  # "Нет" — не выполнять (по умолчанию)
         *) 
             echo -e "${BLUE_DECOR} ${D_ORANGE}Неверный ввод, попробуйте снова.${D_CANCEL}"
-            confirm "$message"   # Рекурсия до правильного ввода
+            refuse "$message"    # Рекурсия до правильного ввода
         ;;
     esac
 }

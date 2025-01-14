@@ -12,15 +12,18 @@
     - in_shopping_cart: связь рецепта с `User` для реализации добавления
     рецепта в корзину для покупок.
 """
+import random
+import string
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import IntegrityError, models
 
 from config.db_indexes import get_indexes_for_model
 
 HEX_LENGTH: int = 7
 LONG_LENGTH: int = 200
 POSITIVE_VALUE_FOR_VALIDATION: int = 1
+SHORT_CODE_LENGTH: int = 3
 
 User = get_user_model()
 
@@ -105,12 +108,37 @@ class Recipe(NamedModel):
         verbose_name='наличие рецепта в списке покупок',
         blank=True,
     )
+    short_code = models.CharField(
+        'короткий код',
+        max_length=SHORT_CODE_LENGTH,
+        unique=True,
+        editable=False,
+    )
 
     class Meta:
         indexes = get_indexes_for_model('Recipe')
         ordering = ('-pub_date',)
         verbose_name = 'рецепт'
         verbose_name_plural = 'рецепты'
+
+    def _generate_short_code(self):
+        """Генерирует уникальный короткий код из 3 символов."""
+        for _ in range(10):  # Предотвращение возможных коллизий
+            code = ''.join(
+                random.choices(
+                    string.ascii_letters + string.digits, k=SHORT_CODE_LENGTH
+                )
+            )
+            if not Recipe.objects.filter(short_code=code).exists():
+                return code
+        raise IntegrityError(
+            'Не удалось сгенерировать уникальный короткий код.'
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.short_code:
+            self.short_code = self._generate_short_code()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f'{self.name} (автор: {self.author}).'

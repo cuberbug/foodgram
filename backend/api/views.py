@@ -2,6 +2,7 @@
 Хранит представления, используемые для работы API.
 """
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -9,7 +10,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
-    IsAuthenticated, IsAuthenticatedOrReadOnly
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 
@@ -24,7 +25,7 @@ from api.serializers import (
     CreateRecipeSerializer
 )
 from api.pagination import CustomPageNumberPagination
-from food.models import Ingredient, Recipe, Tag
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
 
 
@@ -230,3 +231,49 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         recipe.is_in_shopping_cart.remove(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[AllowAny],
+        url_path='get-link'
+    )
+    def get_short_link(self, request, pk=None):
+        """Возвращает короткую ссылку на рецепт."""
+        recipe = self.get_object()
+        short_link = request.build_absolute_uri(f'/s/{recipe.short_code}')
+        return Response({'short-link': short_link}, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated],
+        url_path='download_shopping_cart'
+    )
+    def download_shopping_cart(self, request):
+        """Генерация и скачивание списка покупок в формате .txt"""
+        # Получаем рецепты из корзины текущего пользователя
+        recipes = request.user.recipes_in_shopping_cart.all()
+
+        # Агрегируем ингредиенты
+        ingredients = {}
+        for recipe in recipes:
+            for item in RecipeIngredient.objects.filter(recipe=recipe):
+                name = (
+                    f'{item.ingredient.name} '
+                    f'({item.ingredient.measurement_unit})'
+                )
+                ingredients[name] = ingredients.get(name, 0) + item.amount
+
+        # Формируем текстовый контент
+        shopping_list = '\n'.join(
+            [f'- {name} — {amount}' for name, amount in ingredients.items()]
+        )
+
+        # Формируем ответ с текстовым файлом
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
+
+        return response
