@@ -51,7 +51,7 @@ class Base64ImageField(serializers.ImageField):
             Вызывает родительский метод, передав в него изображение
             в виде объекта ContentFile.
         """
-        match data:  # type: ignore
+        match data:
             case str() if data.startswith('data:image'):
                 try:
                     format, imgstr = data.split(';base64,', maxsplit=1)
