@@ -6,9 +6,7 @@
 """
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
-
 from food.models import Ingredient, Recipe, Tag
-
 
 User = get_user_model()
 

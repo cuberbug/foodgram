@@ -4,13 +4,12 @@
 Производит переадресацию запросов к API и обрабатывает админку.
 """
 from django.conf import settings
-from django.contrib import admin
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import include, path, re_path
-
-from food.models import Recipe, SHORT_CODE_LENGTH
+from food.models import SHORT_CODE_LENGTH, Recipe
 
 
 def health_check(request):
