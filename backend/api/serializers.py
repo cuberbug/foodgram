@@ -51,33 +51,61 @@ class Base64ImageField(serializers.ImageField):
             Вызывает родительский метод, передав в него изображение
             в виде объекта ContentFile.
         """
-        match data:
-            case str() if data.startswith('data:image'):
-                try:
-                    format, imgstr = data.split(';base64,', maxsplit=1)
-                    if not imgstr:
-                        raise serializers.ValidationError(
-                            'Изображение не может быть пустым.'
-                        )
-                except ValueError:
+        # === не ест линтер === #
+        # match data:
+        #     case str() if data.startswith('data:image'):
+        #         try:
+        #             format, imgstr = data.split(';base64,', maxsplit=1)
+        #             if not imgstr:
+        #                 raise serializers.ValidationError(
+        #                     'Изображение не может быть пустым.'
+        #                 )
+        #         except ValueError:
+        #             raise serializers.ValidationError(
+        #                 'Неверный формат изображения: ожидается base64.'
+        #             )
+
+        #         ext = format.split('/')[-1]
+
+        #         try:
+        #             decoded_img = base64.b64decode(imgstr)
+        #         except binascii.Error:
+        #             raise serializers.ValidationError(
+        #                 'Некорректные данные base64.'
+        #             )
+
+        #         data = ContentFile(decoded_img, name=f'temp.{ext}')
+        #     case _:
+        #         raise serializers.ValidationError(
+        #             'Полученные данные не являются строкой с изображением.'
+        #         )
+        # ===================== #
+        if isinstance(data, str) and data.startswith('data:image'):
+            try:
+                format, imgstr = data.split(';base64,', maxsplit=1)
+                if not imgstr:
                     raise serializers.ValidationError(
-                        'Неверный формат изображения: ожидается base64.'
+                        'Изображение не может быть пустым.'
                     )
-
-                ext = format.split('/')[-1]
-
-                try:
-                    decoded_img = base64.b64decode(imgstr)
-                except binascii.Error:
-                    raise serializers.ValidationError(
-                        'Некорректные данные base64. Проверьте входные данные.'
-                    )
-
-                data = ContentFile(decoded_img, name=f'temp.{ext}')
-            case _:
+            except ValueError:
                 raise serializers.ValidationError(
-                    'Полученные данные не являются строкой с изображением.'
+                    'Неверный формат изображения: ожидается base64.'
                 )
+
+            ext = format.split('/')[-1]
+
+            try:
+                decoded_img = base64.b64decode(imgstr)
+            except binascii.Error:
+                raise serializers.ValidationError(
+                    'Некорректные данные base64. Проверьте входные данные.'
+                )
+
+            data = ContentFile(decoded_img, name=f'temp.{ext}')
+        else:
+            raise serializers.ValidationError(
+                'Полученные данные не являются строкой с изображением.'
+            )
 
         return super().to_internal_value(data)
 
