@@ -5,19 +5,17 @@ import base64
 import binascii
 from typing import Any, Union
 
+from api.validators import USERNAME_EMAIL_VALIDATOR
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
-
-from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
-from api.validators import USERNAME_EMAIL_VALIDATOR
-
 
 User = get_user_model()
 

@@ -1,33 +1,25 @@
 """
 Хранит представления, используемые для работы API.
 """
+from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import CustomPageNumberPagination
+from api.serializers import (CreateRecipeSerializer,
+                             CustomUserCreateSerializer, CustomUserSerializer,
+                             IngredientSerializer, RecipeSerializer,
+                             SubscriptionCreateSerializer, TagSerializer)
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-
-from api.filters import IngredientFilter, RecipeFilter
-from api.serializers import (
-    CustomUserCreateSerializer,
-    CustomUserSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    SubscriptionCreateSerializer,
-    TagSerializer,
-    CreateRecipeSerializer
-)
-from api.pagination import CustomPageNumberPagination
-from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
-
 
 User = get_user_model()
 
