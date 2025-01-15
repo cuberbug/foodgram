@@ -252,10 +252,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         """Генерация и скачивание списка покупок в формате .txt"""
-        # Получаем рецепты из корзины текущего пользователя
         recipes = request.user.recipes_in_shopping_cart.all()
 
-        # Агрегируем ингредиенты
         ingredients = {}
         for recipe in recipes:
             for item in RecipeIngredient.objects.filter(recipe=recipe):
@@ -265,12 +263,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
                 ingredients[name] = ingredients.get(name, 0) + item.amount
 
-        # Формируем текстовый контент
         shopping_list = '\n'.join(
             [f'- {name} — {amount}' for name, amount in ingredients.items()]
         )
 
-        # Формируем ответ с текстовым файлом
         response = HttpResponse(shopping_list, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename="shopping_list.txt"'

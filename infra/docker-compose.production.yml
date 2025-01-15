@@ -1,0 +1,77 @@
+# Рекомендуется поместить этот файл в отдельную директорию, которая будет корнем для проекта.
+# В этой директории следует доополнительно разместить:
+# ./
+# ├── .env (переменные окружения)
+# ├── data (для реализации заполнения БД подготовленными ингредиентами)
+# │   ├── ingredients.csv
+# │   └── ingredients.json
+# ├── docker-compose.production.yml
+# └── docs (на случай, если нужно раздавать документацию к проекту)
+#     ├── openapi-schema.yml
+#     └── redoc.html
+
+volumes:
+  pg_data:
+  backend_volume:
+  front_volume:
+  media:
+  logs:
+
+services:
+
+  db:
+    container_name: db
+    env_file: .env
+    image: postgres:17
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$POSTGRES_PASSWORD pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: foodgram-backend
+    env_file: .env
+    image: ${REPO_OWNER}/foodgram_backend
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - backend_volume:/app/backend_static
+      - media:/app/media
+      - logs:/app/logs
+      # data необходимо скопировать на сервер или закомментировать том
+      - ./data:/app/data
+    depends_on:
+      - db
+
+  frontend:
+    container_name: foodgram-front
+    env_file: .env
+    image: ${REPO_OWNER}/foodgram_frontend
+    volumes:
+      - front_volume:/app/result_build/build
+    depends_on:
+      - backend
+
+  nginx:
+    container_name: foodgram-proxy
+    env_file: .env
+    image: ${REPO_OWNER}/foodgram_nginx
+    ports:
+      - ${GATEWAY_PORTS}
+    volumes:
+      - backend_volume:/app/backend_static
+      - front_volume:/app/result_build/build
+      - media:/app/media
+      # docs необходимо скопировать на сервер или закомментировать том
+      - ./docs/:/usr/share/nginx/html/api/docs/
+    depends_on:
+      - frontend
+      - backend
