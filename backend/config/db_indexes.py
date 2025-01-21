@@ -20,9 +20,10 @@ import logging
 from enum import Enum
 from typing import TypeAlias
 
-from config.settings import DATABASE_NAME, POSTGRESQL, SQLITE
 from django.contrib.postgres.indexes import BrinIndex
 from django.db import models
+
+from config.settings import DATABASE_NAME, POSTGRESQL, SQLITE
 
 logger = logging.getLogger(__name__)
 

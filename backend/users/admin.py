@@ -7,6 +7,7 @@
 """
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+
 from food.models import Recipe
 from users.models import Subscription
 

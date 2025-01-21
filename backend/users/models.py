@@ -8,9 +8,10 @@
 Применение:
     Используется в приложениях `food` и `api`.
 """
-from config.db_indexes import get_indexes_for_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from config.db_indexes import get_indexes_for_model
 
 
 class User(AbstractUser):

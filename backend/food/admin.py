@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
+
 from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from environs import Env
 
-
 # Управление переменными окружения
 
 env = Env()

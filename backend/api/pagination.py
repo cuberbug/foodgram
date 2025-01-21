@@ -4,8 +4,9 @@
 Значение пагинации динамично и зависит от заданных параметров
 в переменных окружения проекта.
 """
-from config.settings import PAGINATION_SIZE
 from rest_framework.pagination import PageNumberPagination
+
+from config.settings import PAGINATION_SIZE
 
 
 class CustomPageNumberPagination(PageNumberPagination):

@@ -15,10 +15,11 @@
 import random
 import string
 
-from config.db_indexes import get_indexes_for_model
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import IntegrityError, models
+
+from config.db_indexes import get_indexes_for_model
 
 HEX_LENGTH: int = 7
 LONG_LENGTH: int = 200
