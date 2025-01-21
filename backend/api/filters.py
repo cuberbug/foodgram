@@ -6,6 +6,7 @@
 """
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
+
 from food.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
@@ -28,6 +29,10 @@ class RecipeFilter(filters.FilterSet):
         label='В списке покупок'
     )
 
+    class Meta:
+        model = Recipe
+        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
+
     def filter_is_favorited(self, queryset, name: str, value: bool):
         """Фильтрует рецепты, добавленные пользователем в избранное."""
         user = self.request.user  # type: ignore
@@ -41,10 +46,6 @@ class RecipeFilter(filters.FilterSet):
         if value and user.is_authenticated:
             return queryset.filter(is_in_shopping_cart=user)
         return queryset
-
-    class Meta:
-        model = Recipe
-        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
 
 
 class IngredientFilter(filters.FilterSet):

@@ -1,24 +1,25 @@
 """
 Хранит представления, используемые для работы API.
 """
-from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import CustomPageNumberPagination
-from api.serializers import (CreateRecipeSerializer,
-                             CustomUserCreateSerializer, CustomUserSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             SubscriptionCreateSerializer, TagSerializer)
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+
+from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import CustomPageNumberPagination
+from api.serializers import (CreateRecipeSerializer,
+                             CustomUserCreateSerializer, CustomUserSerializer,
+                             IngredientSerializer, RecipeSerializer,
+                             SubscriptionCreateSerializer, TagSerializer)
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
 
 User = get_user_model()
@@ -72,6 +73,21 @@ class CustomUserViewSet(UserViewSet):
     def delete_avatar(self, request):
         self.request.user.avatar.delete()  # type: ignore
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def subscriptions(self, request):
+        """Получение списка подписок текущего пользователя."""
+        subscriptions = Subscription.objects.filter(user=request.user)
+        authors = [subscription.author for subscription in subscriptions]
+        page = self.paginate_queryset(authors)
+        serializer = CustomUserSerializer(
+            page, many=True, context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
 
     @action(
         detail=True,

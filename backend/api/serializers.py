@@ -5,21 +5,23 @@ import base64
 import binascii
 from typing import Any, Union
 
-from api.validators import USERNAME_EMAIL_VALIDATOR
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
+
+from api.validators import USERNAME_EMAIL_VALIDATOR
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
 
 User = get_user_model()
 
 MIN_COOKING_TIME: int = 1
+MIN_VALUE_INGREDIENT: int = 1
 MAX_LENGTH: int = 150
 BIG_MAX_LENGTH: int = 254
 
@@ -51,35 +53,6 @@ class Base64ImageField(serializers.ImageField):
             Вызывает родительский метод, передав в него изображение
             в виде объекта ContentFile.
         """
-        # === не ест линтер === #
-        # match data:
-        #     case str() if data.startswith('data:image'):
-        #         try:
-        #             format, imgstr = data.split(';base64,', maxsplit=1)
-        #             if not imgstr:
-        #                 raise serializers.ValidationError(
-        #                     'Изображение не может быть пустым.'
-        #                 )
-        #         except ValueError:
-        #             raise serializers.ValidationError(
-        #                 'Неверный формат изображения: ожидается base64.'
-        #             )
-
-        #         ext = format.split('/')[-1]
-
-        #         try:
-        #             decoded_img = base64.b64decode(imgstr)
-        #         except binascii.Error:
-        #             raise serializers.ValidationError(
-        #                 'Некорректные данные base64.'
-        #             )
-
-        #         data = ContentFile(decoded_img, name=f'temp.{ext}')
-        #     case _:
-        #         raise serializers.ValidationError(
-        #             'Полученные данные не являются строкой с изображением.'
-        #         )
-        # ===================== #
         if isinstance(data, str) and data.startswith('data:image'):
             try:
                 format, imgstr = data.split(';base64,', maxsplit=1)
@@ -220,7 +193,9 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
     )
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField(
+        validators=[MinValueValidator(MIN_VALUE_INGREDIENT)]
+    )
 
     class Meta:
         model = RecipeIngredient
