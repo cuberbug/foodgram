@@ -125,29 +125,30 @@ jobs:
         source: "./infra/docker-compose.production.yml"
         target: "~/production/foodgram"
     - name: Executing remote ssh commands to deploy
-      env:
-        PATH_TO_FILE: "/home/cuberbug/production/foodgram/docker-compose.production.yml"
+      # env:
+      #   PATH_TO_FILE: "/home/cuberbug/production/foodgram/docker-compose.production.yml"
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSH_KEY }}
-        script: |
-          echo "Проверка пути: $PATH_TO_FILE"
-          sudo docker-compose -f $PATH_TO_FILE pull
-          sudo docker-compose -f $PATH_TO_FILE down
-          sudo docker-compose -f $PATH_TO_FILE up -d
-          #
-          # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
-          # Если такое произойдёт, следует искать причины на стороне сервера.
-          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py makemigrations
-          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py migrate
-          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py collectstatic --no-input
-          #
-          # Скрипт для отладки, не входит в состав проекта.
-          # Это временная мера, скрипт в последствии должен быть удалён или переименован в случае, если будет использоваться.
-          # ./post_deploy.py
+        # script: |
+        #   echo "Проверка пути: $PATH_TO_FILE"
+        #   sudo docker-compose -f $PATH_TO_FILE pull
+        #   sudo docker-compose -f $PATH_TO_FILE down
+        #   sudo docker-compose -f $PATH_TO_FILE up -d
+        #   #
+        #   # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
+        #   # Если такое произойдёт, следует искать причины на стороне сервера.
+        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py makemigrations
+        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py migrate
+        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py collectstatic --no-input
+        #   #
+        #   # Скрипт для отладки, не входит в состав проекта.
+        #   # Это временная мера, скрипт в последствии должен быть удалён или переименован в случае, если будет использоваться.
+        #   # ./post_deploy.py
+        script_path: /home/cuberbug/production/foodgram/post_deploy.sh
 
 
   send_message:
