@@ -83,9 +83,10 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         """Получение списка подписок текущего пользователя."""
-        subscriptions = Subscription.objects.filter(user=request.user)
-        authors = [subscription.author for subscription in subscriptions]
-        page = self.paginate_queryset(authors)
+        # subscriptions = Subscription.objects.filter(user=request.user)
+        # authors = [subscription.author for subscription in subscriptions]
+        # page = self.paginate_queryset(authors)
+        page = self.paginate_queryset(self.get_queryset())
         serializer = SubscriptionsSerializer(
             page, many=True, context=self.get_serializer_context()
         )

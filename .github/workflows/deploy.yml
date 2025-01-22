@@ -133,22 +133,20 @@ jobs:
         username: ${{ secrets.USER }}
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSH_KEY }}
-        # script: |
-        #   echo "Проверка пути: $PATH_TO_FILE"
-        #   sudo docker-compose -f $PATH_TO_FILE pull
-        #   sudo docker-compose -f $PATH_TO_FILE down
-        #   sudo docker-compose -f $PATH_TO_FILE up -d
-        #   #
-        #   # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
-        #   # Если такое произойдёт, следует искать причины на стороне сервера.
-        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py makemigrations
-        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py migrate
-        #   # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py collectstatic --no-input
-        #   #
-        #   # Скрипт для отладки, не входит в состав проекта.
-        #   # Это временная мера, скрипт в последствии должен быть удалён или переименован в случае, если будет использоваться.
-        #   # ./post_deploy.py
-        script_path: /home/cuberbug/production/foodgram/post_deploy.sh
+        script: |
+          sudo docker-compose -f ~/production/foodgram/docker-compose.production.yml pull
+          sudo docker-compose -f ~/production/foodgram/docker-compose.production.yml down
+          sudo docker-compose -f ~/production/foodgram/docker-compose.production.yml up -d
+          #
+          # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
+          # Если такое произойдёт, следует искать причины на стороне сервера.
+          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py makemigrations
+          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py migrate
+          # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py collectstatic --no-input
+          #
+          # Скрипт для отладки, не входит в состав проекта.
+          # Это временная мера, скрипт в последствии должен быть удалён или переименован в случае, если будет использоваться.
+          # ./post_deploy.p
 
 
   send_message:
