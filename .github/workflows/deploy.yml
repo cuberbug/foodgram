@@ -132,6 +132,9 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSH_KEY }}
         script: |
+          echo "Запуск bash..."
+          bash
+          echo "Привет из bash!"
           cd ~/production/foodgram
           sudo docker-compose -f docker-compose.production.yml pull
           sudo docker-compose -f docker-compose.production.yml down
@@ -139,9 +142,9 @@ jobs:
           #
           # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
           # Если такое произойдёт, следует искать причины на стороне сервера.
-          # sudo docker-compose -f docker-compose.production.yml exec backend python manage.py makemigrations
-          # sudo docker-compose -f docker-compose.production.yml exec backend python manage.py migrate
-          # sudo docker-compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+          sudo docker-compose -f docker-compose.production.yml exec backend python manage.py makemigrations
+          sudo docker-compose -f docker-compose.production.yml exec backend python manage.py migrate
+          sudo docker-compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
           #
           # Скрипт для отладки, не входит в состав проекта.
           # Это временная мера, скрипт в последствии должен быть удалён или переименован в случае, если будет использоваться.

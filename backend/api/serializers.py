@@ -129,8 +129,10 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         return serializer.data
 
 
+# Subscription >>
+
 class SubscriptionCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор подписки."""
+    """Сериализатор создания подписки."""
     class Meta:
         model = Subscription
         fields = ('user', 'author')
@@ -150,8 +152,36 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        return CustomUserSerializer(
+        return SubscriptionsSerializer(
             instance.author, context=self.context
+        ).data
+
+
+class SubscriptionsSerializer(serializers.ModelSerializer):
+    """Сериализатор подписок."""
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(
+        read_only=True,
+        default=0
+    )
+
+    class Meta(CustomUserSerializer.Meta):
+        fields = (
+            CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        )
+
+    def get_recipes(self, obj):
+        recipes_limit = (
+            self.context['request'].query_params.get('recipes_limit')
+        )
+        recipes = obj.recipes.all()
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+
+        return ShortRecipeSerializer(
+            recipes,
+            many=True,
+            context=self.context
         ).data
 
 
@@ -205,7 +235,7 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
 # Recipe >>
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
-    """Краткий сериализатор рецепта."""
+    """Краткий сериализатор рецепта, используется в подписках."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
