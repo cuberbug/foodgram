@@ -126,7 +126,7 @@ jobs:
         target: "~/production/foodgram"
     - name: Executing remote ssh commands to deploy
       env:
-        PATH_TO_FILE: /home/cuberbug/production/foodgram/docker-compose.production.yml
+        PATH_TO_FILE: "/home/cuberbug/production/foodgram/docker-compose.production.yml"
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
@@ -134,8 +134,7 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          echo "Проверка пути:"
-          echo -e "$PATH_TO_FILE"
+          echo "Проверка пути: $PATH_TO_FILE"
           sudo docker-compose -f $PATH_TO_FILE pull
           sudo docker-compose -f $PATH_TO_FILE down
           sudo docker-compose -f $PATH_TO_FILE up -d
