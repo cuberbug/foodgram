@@ -148,6 +148,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Представление для модели ингредиента."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    search_fields = ['^name']
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientFilter
     permission_classes = [IsAuthenticatedOrReadOnly]
