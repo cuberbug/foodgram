@@ -15,7 +15,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from api.filters import IngredientFilter, RecipeFilter
+from api.filters import RecipeFilter
 from api.pagination import CustomPageNumberPagination
 from api.serializers import (
     CreateRecipeSerializer, CustomUserCreateSerializer, CustomUserSerializer,
@@ -149,9 +149,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Представление для модели ингредиента."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    search_fields = ['^name']
+    search_fields = ['name']
     filter_backends = [SearchFilter]
-    filterset_class = IngredientFilter
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None  # Убрать пагинацию
 
