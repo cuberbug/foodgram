@@ -7,23 +7,20 @@ from typing import Any, Union
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
-from djoser.serializers import UserCreateSerializer, UserSerializer
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
-from api.validators import USERNAME_EMAIL_VALIDATOR
+from api.validators import (
+    MAX_COOKING_TIME, MIN_COOKING_TIME, MIN_VALUE_INGREDIENT,
+)
 from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
 
 User = get_user_model()
-
-MIN_COOKING_TIME: int = 1
-MIN_VALUE_INGREDIENT: int = 1
-MAX_LENGTH: int = 150
-BIG_MAX_LENGTH: int = 254
 
 
 # DATA >>
@@ -85,7 +82,7 @@ class Base64ImageField(serializers.ImageField):
 
 # User >>
 
-class CustomUserSerializer(UserSerializer):
+class CustomUserReadSerializer(UserSerializer):
     """Сериализатор кастомного пользователя."""
     avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.SerializerMethodField()
@@ -107,26 +104,6 @@ class CustomUserSerializer(UserSerializer):
                 user=request.user, author=obj
             ).only('id').exists()
         return False
-
-
-class CustomUserCreateSerializer(UserCreateSerializer):
-    """Создание нового пользователя."""
-    username = serializers.CharField(
-        max_length=MAX_LENGTH,
-        validators=[USERNAME_EMAIL_VALIDATOR],
-    )
-    email = serializers.EmailField(
-        max_length=BIG_MAX_LENGTH,
-        validators=[USERNAME_EMAIL_VALIDATOR],
-    )
-
-    class Meta:
-        model = User
-        fields = (*User.REQUIRED_FIELDS, User.USERNAME_FIELD, 'password')
-
-    def to_representation(self, instance):
-        serializer = CustomUserSerializer(instance)
-        return serializer.data
 
 
 # Subscription >>
@@ -159,7 +136,7 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор подписок."""
-    author = CustomUserSerializer()
+    author = CustomUserReadSerializer()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(
         read_only=True,
@@ -180,7 +157,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
 
-        author_data = CustomUserSerializer(
+        author_data = CustomUserReadSerializer(
             instance.author, context=self.context
         ).data
 
@@ -227,10 +204,19 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор данных для сохранения ингредиентов в рецепт."""
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        queryset=Ingredient.objects.all(),
+        error_messages={'does_not_exist': 'Ингредиент с таким ID не найден.'}
     )
     amount = serializers.IntegerField(
-        validators=[MinValueValidator(MIN_VALUE_INGREDIENT)]
+        validators=[MinValueValidator(MIN_VALUE_INGREDIENT)],
+        error_messages={
+            'min_value': (
+                'Количество ингредиента не может быть меньше '
+                f'{MIN_VALUE_INGREDIENT}.'
+            ),
+            'invalid': 'Введите корректное целое число.',
+            'required': 'Это поле обязательно для заполнения.',
+        }
     )
 
     class Meta:
@@ -249,8 +235,8 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор Рецепта."""
-    author = CustomUserSerializer(read_only=True)
-    tags = TagSerializer(many=True)
+    author = CustomUserReadSerializer(read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
     image = Base64ImageField()
     ingredients = RecipeIngredientSerializer(
         source='recipeingredient_set', many=True, read_only=True
@@ -295,12 +281,28 @@ class RecipeSerializer(serializers.ModelSerializer):
 class CreateRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор создания рецептов."""
     cooking_time = serializers.IntegerField(
-        validators=[MinValueValidator(MIN_COOKING_TIME)]
+        validators=[
+            MinValueValidator(MIN_COOKING_TIME),
+            MaxValueValidator(MAX_COOKING_TIME),
+        ],
+        error_messages={
+            'min_value': (
+                'Время приготовления должно быть не менее '
+                f'{MIN_COOKING_TIME} минут.'
+            ),
+            'max_value': (
+                'Время приготовления не должно превышать '
+                f'{MAX_COOKING_TIME} минут.'
+            ),
+            'invalid': 'Введите корректное целое число.',
+            'required': 'Это поле обязательно.',
+        },
     )
     image = Base64ImageField(use_url=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Tag.objects.all()
+        queryset=Tag.objects.all(),
+        error_messages={'does_not_exist': 'Тег с таким ID не найден.'}
     )
     ingredients = CreateRecipeIngredientSerializer(many=True)
 
@@ -315,33 +317,29 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def _validate_ingredients(self, ingredients):
-        if not bool(ingredients):
-            raise ValidationError(
-                'Поле ингредиенты обязательно для заполнения'
-            )
-        unique_ingredients = {ingredient['id'] for ingredient in ingredients}
-        if len(ingredients) != len(unique_ingredients):
-            raise ValidationError('Ингредиенты не должны повторяться.')
-        return ingredients
-
-    def _validate_tags(self, tags):
-        if not bool(tags):
-            raise ValidationError('Поле теги обязательно для заполнения')
-        if len(tags) != len(set(tags)):
-            raise ValidationError('Теги не должны повторяться')
-        return tags
-
     def validate(self, data):
         tags = data.get('tags')
         ingredients = data.get('ingredients')
-        validated_tags = self._validate_tags(tags)
-        validated_ingredients = self._validate_ingredients(ingredients)
-        data['tags'] = validated_tags
-        data['ingredients'] = validated_ingredients
+
+        if not tags:
+            raise ValidationError(
+                {'tags': 'Поле теги обязательно для заполнения.'}
+            )
+        if len(tags) != len(set(tags)):
+            raise ValidationError({'tags': 'Теги не должны повторяться.'})
+
+        if not ingredients:
+            raise ValidationError(
+                {'ingredients': 'Поле ингредиенты обязательно для заполнения.'}
+            )
+        unique_ingredients = {ingredient['id'] for ingredient in ingredients}
+        if len(ingredients) != len(unique_ingredients):
+            raise ValidationError(
+                {'ingredients': 'Ингредиенты не должны повторяться.'}
+            )
+
         return data
 
-    @transaction.atomic
     def _create_ingredients(self, recipe, ingredients):
         RecipeIngredient.objects.bulk_create(
             [

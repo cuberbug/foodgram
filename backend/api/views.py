@@ -3,8 +3,8 @@
 """
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.serializers import UserCreateSerializer
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -17,9 +17,9 @@ from rest_framework.response import Response
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import CustomPageNumberPagination
 from api.serializers import (
-    CreateRecipeSerializer, CustomUserCreateSerializer, CustomUserSerializer,
-    IngredientSerializer, RecipeSerializer, SubscriptionCreateSerializer,
-    SubscriptionSerializer, TagSerializer,
+    CreateRecipeSerializer, CustomUserReadSerializer, IngredientSerializer,
+    RecipeSerializer, SubscriptionCreateSerializer, SubscriptionSerializer,
+    TagSerializer,
 )
 from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
@@ -35,14 +35,24 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = LimitOffsetPagination
 
     def get_permissions(self):
+        """Определение прав доступа в зависимости от действия."""
         if self.action == 'me':
             self.permission_classes = [IsAuthenticated]
         return super().get_permissions()
 
     def get_serializer_class(self):
+        """Выбор сериализатора в зависимости от действия."""
+        if self.action == 'me':
+            return CustomUserReadSerializer
+        if self.action == 'avatar' and self.request.method == 'PUT':
+            return CustomUserReadSerializer
+        if self.action == 'subscribe':
+            return SubscriptionCreateSerializer
+        if self.action == 'subscriptions':
+            return SubscriptionSerializer
         if self.request.method == 'POST':
-            return CustomUserCreateSerializer
-        return CustomUserSerializer
+            return UserCreateSerializer
+        return CustomUserReadSerializer
 
     @action(
         detail=False,
@@ -50,8 +60,8 @@ class CustomUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated]
     )
     def me(self, request):
-        user = request.user
-        serializer = CustomUserSerializer(user)
+        """Возвращает информацию о текущем пользователе."""
+        serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -61,11 +71,11 @@ class CustomUserViewSet(UserViewSet):
         url_path='me/avatar',
     )
     def avatar(self, request):
-        serializer = CustomUserSerializer(
+        """Обновление аватара пользователя."""
+        serializer = self.get_serializer(
             instance=self.get_instance(),
             data=request.data,
             partial=True,
-            context=self.get_serializer_context()
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -73,6 +83,7 @@ class CustomUserViewSet(UserViewSet):
 
     @avatar.mapping.delete
     def delete_avatar(self, request):
+        """Удаление аватара пользователя."""
         self.request.user.avatar.delete()  # type: ignore
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -86,9 +97,7 @@ class CustomUserViewSet(UserViewSet):
         page = self.paginate_queryset(
             Subscription.objects.filter(user=request.user)
         )
-        serializer = SubscriptionSerializer(
-            page, many=True, context=self.get_serializer_context()
-        )
+        serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(
@@ -98,7 +107,7 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscribe(self, request, pk=None):
         """Подписка на пользователя."""
-        author = get_object_or_404(User, pk=pk)
+        author = self.get_object()
         if Subscription.objects.filter(
             user=request.user, author=author
         ).exists():
@@ -110,15 +119,13 @@ class CustomUserViewSet(UserViewSet):
         subscription = Subscription.objects.create(
             user=request.user, author=author
         )
-        serializer = SubscriptionCreateSerializer(
-            subscription, context={'request': request}
-        )
+        serializer = self.get_serializer(subscription)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
         """Отписка от пользователя."""
-        author = get_object_or_404(User, pk=pk)
+        author = self.get_object()
         subscription = Subscription.objects.filter(
             user=request.user, author=author
         )
