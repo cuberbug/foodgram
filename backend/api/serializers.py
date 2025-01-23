@@ -175,13 +175,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         recipes_limit = (
             request.query_params.get('recipes_limit')  # type: ignore
         )
-        recipes = instance.author.recipes.all()
 
+        recipes = instance.author.recipes.all()
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
 
+        author_data = CustomUserSerializer(
+            instance.author, context=self.context
+        ).data
+
         return {
-            'author': CustomUserSerializer(instance.author).data,
+            **author_data,   # type: ignore
             'recipes': ShortRecipeSerializer(recipes, many=True).data,
             'recipes_count': recipes.count()
         }
