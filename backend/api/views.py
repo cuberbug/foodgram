@@ -19,7 +19,7 @@ from api.pagination import CustomPageNumberPagination
 from api.serializers import (
     CreateRecipeSerializer, CustomUserCreateSerializer, CustomUserSerializer,
     IngredientSerializer, RecipeSerializer, SubscriptionCreateSerializer,
-    SubscriptionsSerializer, TagSerializer,
+    SubscriptionSerializer, TagSerializer,
 )
 from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription
@@ -83,13 +83,10 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         """Получение списка подписок текущего пользователя."""
-        # subscriptions = Subscription.objects.filter(user=request.user)
-        # authors = [subscription.author for subscription in subscriptions]
-        # page = self.paginate_queryset(authors)
         page = self.paginate_queryset(
             Subscription.objects.filter(user=request.user)
         )
-        serializer = SubscriptionsSerializer(
+        serializer = SubscriptionSerializer(
             page, many=True, context=self.get_serializer_context()
         )
         return self.get_paginated_response(serializer.data)

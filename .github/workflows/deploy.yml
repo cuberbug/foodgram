@@ -125,6 +125,7 @@ jobs:
         source: "./infra/docker-compose.production.yml"
         target: "~/production/foodgram"
     - name: Executing remote ssh commands to deploy
+      # Разобраться с тем, почему не получается работать с переменными окружения в `script:`.
       # env:
       #   PATH_TO_FILE: "/home/cuberbug/production/foodgram/docker-compose.production.yml"
       uses: appleboy/ssh-action@master
@@ -138,8 +139,9 @@ jobs:
           sudo docker-compose -f ~/production/foodgram/docker-compose.production.yml down
           sudo docker-compose -f ~/production/foodgram/docker-compose.production.yml up -d
           #
-          # Возможно падение выполнения сценария, вызванное ошибкой, связанной с tty.
-          # Если такое произойдёт, следует искать причины на стороне сервера.
+          # Выполнение этих команд роняет ошибка tty, связанная с особенностью настройки сервера.
+          # Если удастся устранить возникновение ошибки, то команды следует раскомментировать.
+          # Иначе: выполнить команды вручную или воспользоваться скриатом `post_deploy.sh`.
           # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py makemigrations
           # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py migrate
           # sudo docker-compose -f $PATH_TO_FILE exec backend python manage.py collectstatic --no-input

@@ -152,37 +152,39 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        return SubscriptionsSerializer(
+        return SubscriptionSerializer(
             instance.author, context=self.context
         ).data
 
 
-class SubscriptionsSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор подписок."""
+    author = CustomUserSerializer()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(
         read_only=True,
         default=0
     )
 
-    class Meta(CustomUserSerializer.Meta):
-        fields = (
-            CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
-        )
+    class Meta:
+        model = Subscription
+        fields = ('author', 'recipes', 'recipes_count')
 
-    def get_recipes(self, obj):
+    def to_representation(self, instance):
+        request = self.context.get('request')
         recipes_limit = (
-            self.context['request'].query_params.get('recipes_limit')
+            request.query_params.get('recipes_limit')  # type: ignore
         )
-        recipes = obj.recipes.all()
+        recipes = instance.author.recipes.all()
+
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
 
-        return ShortRecipeSerializer(
-            recipes,
-            many=True,
-            context=self.context
-        ).data
+        return {
+            'author': CustomUserSerializer(instance.author).data,
+            'recipes': ShortRecipeSerializer(recipes, many=True).data,
+            'recipes_count': recipes.count()
+        }
 
 
 # Tag >>
