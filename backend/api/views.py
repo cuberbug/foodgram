@@ -8,14 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import CustomPageNumberPagination
 from api.serializers import (
     CreateRecipeSerializer, CustomUserCreateSerializer, CustomUserSerializer,
@@ -150,7 +149,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     search_fields = ['name']
-    filter_backends = [SearchFilter]
+    filter_backends = [IngredientFilter]
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None  # Убрать пагинацию
 
