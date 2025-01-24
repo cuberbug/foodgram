@@ -211,7 +211,6 @@ DJOSER = {
     'HIDE_USERS': False,
     'USER_ID_FIELD': 'pk',
     'SERIALIZERS': {
-        'user_create': 'api.serializers.CustomUserCreateSerializer',
         'user': 'api.serializers.CustomUserReadSerializer',
         'current_user': 'api.serializers.CustomUserReadSerializer',
     },
