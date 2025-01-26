@@ -89,7 +89,7 @@ class CustomUserReadSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         model = User
-        fields = UserSerializer.Meta.fields + ('avatar', 'is_subscribed')
+        fields = UserSerializer.Meta.fields + ('id', 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
