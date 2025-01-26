@@ -104,7 +104,7 @@ class Recipe(NamedModel):
     )
     is_in_shopping_cart = models.ManyToManyField(
         User,
-        db_table='in_shopping_cart',
+        through='ShoppingCart',
         related_name='recipes_in_shopping_cart',
         verbose_name='наличие рецепта в списке покупок',
         blank=True,
@@ -167,4 +167,34 @@ class RecipeIngredient(models.Model):
         ]
         indexes = get_indexes_for_model('RecipeIngredient')
         verbose_name = 'Ингредиент рецепта'
-        verbose_name_plural = 'Ингредиенты рецептов'
+        verbose_name_plural = 'Ингредиенты в рецептах'
+
+
+class ShoppingCart(models.Model):
+    """Модель для связи 'пользователь <-> рецепт' в корзине."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='carts',
+        verbose_name='пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart_positions',
+        verbose_name='рецепт'
+    )
+
+    class Meta:
+        db_table = 'in_shopping_cart'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_user_recipe_in_shopping_cart',
+            )
+        ]
+        verbose_name = 'Позиция в корзине'
+        verbose_name_plural = 'Позиции в корзине'
+
+    def __str__(self):
+        return f'Рецепт "{self.recipe}" в корзине у {self.user}'

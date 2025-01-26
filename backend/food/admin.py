@@ -12,7 +12,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 
-from food.models import Ingredient, Recipe, RecipeIngredient, Tag
+from food.models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 
 User = get_user_model()
 
@@ -92,3 +92,10 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
     """Отображение модели `RecipeIngredient` в админке."""
     list_display = ('recipe', 'ingredient', 'amount')
     search_fields = ('recipe__name', 'ingredient__name')
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    """Отображение модели 'ShoppingCart' в админке."""
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
