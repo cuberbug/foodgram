@@ -85,3 +85,10 @@ class TagAdmin(admin.ModelAdmin):
     """Отображение модели `Tag` в админ части сайта."""
     list_display = ('name', 'slug')
     search_fields = ('name',)
+
+
+@admin.register(RecipeIngredient)
+class RecipeIngredientAdmin(admin.ModelAdmin):
+    """Отображение модели `RecipeIngredient` в админке."""
+    list_display = ('recipe', 'ingredient', 'amount')
+    search_fields = ('recipe__name', 'ingredient__name')

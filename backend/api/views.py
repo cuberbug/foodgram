@@ -107,7 +107,15 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscribe(self, request, pk=None):
         """Подписка на пользователя."""
+        user = request.user
         author = self.get_object()
+
+        if user == author:
+            return Response(
+                {'detail': 'Нельзя подписаться на себя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if Subscription.objects.filter(
             user=request.user, author=author
         ).exists():
@@ -120,7 +128,12 @@ class CustomUserViewSet(UserViewSet):
             user=request.user, author=author
         )
         serializer = self.get_serializer(subscription)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        response = Response(serializer.data, status=status.HTTP_201_CREATED)
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
@@ -155,7 +168,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Представление для модели ингредиента."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    search_fields = ['name']
+    search_fields = ['^name']
     filter_backends = [IngredientFilter]
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None  # Убрать пагинацию

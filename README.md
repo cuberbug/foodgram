@@ -12,6 +12,7 @@
 Приложение состоит из бэкенда на Django Rest Framework и фронтенда на React SPA. Для хранения данных используется PostgreSQL. Весь проект развёрнут в контейнерах Docker, что упрощает запуск и масштабирование.
 
 Проект доступен на домене: [cuberbug.ru](https://cuberbug.ru).
+
 Также доступна документация к API: [ReDoc](https://cuberbug.ru/api/docs/redoc.html)
 
 ---

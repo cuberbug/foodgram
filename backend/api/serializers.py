@@ -89,13 +89,7 @@ class CustomUserReadSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         model = User
-        fields = (
-            *User.REQUIRED_FIELDS,
-            User.USERNAME_FIELD,
-            'id',
-            'avatar',
-            'is_subscribed',
-        )
+        fields = UserSerializer.Meta.fields + ('avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -142,10 +136,18 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         read_only=True,
         default=0
     )
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = Subscription
-        fields = ('author', 'recipes', 'recipes_count')
+        fields = ('author', 'recipes', 'recipes_count', 'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        """Проверяет подписан ли пользователь на автора."""
+        request = self.context.get('request')
+        return Subscription.objects.filter(
+            user=request.user, author=obj.author  # type: ignore
+        ).exists()
 
     def to_representation(self, instance):
         request = self.context.get('request')

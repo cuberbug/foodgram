@@ -7,6 +7,7 @@
 """
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 
 from food.models import Recipe
 from users.models import Subscription
@@ -23,7 +24,7 @@ class RecipeInline(admin.TabularInline):
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(UserAdmin):
     """Отображение модели `User` в админ части сайта."""
     list_display = (
         'email',
